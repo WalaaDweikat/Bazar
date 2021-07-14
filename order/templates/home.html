@@ -1,0 +1,41 @@
+<!doctype html>
+<html>
+   <body>
+
+      
+      {% for x in orders %}
+      <p> order_id = {{x.id}}</p>
+      <p> book_id = {{x.book_id}}</p>
+      ======================================
+      <br><br><br>
+       {%endfor%}
+      
+   
+      <!-- <table border = 1>
+         <thead>
+            <td>order_id</td>
+            <td>date</td>
+            <td>1st</td>
+            <td>2nd</td>
+            <td>3rd</td>
+            <td>4th</td>
+            <td>total_cost</td>
+         </thead>
+         
+         {% for row in rows %}
+            <tr>
+               <td>{{row["order_id"]}}</td>
+               <td>{{row["date"]}}</td>
+               <td> {{ row["1st"]}}</td>
+               <td>{{row['2nd']}}</td>
+               <td>{{row['3rd']}}</td>
+               <td>{{row['4th']}}</td>	
+               <td>{{row['total_cost']}}</td>
+            </tr>
+         {% endfor %}
+      </table>
+      
+      <a href = "/">Go back to home page</a> -->
+      
+   </body>
+</html>
