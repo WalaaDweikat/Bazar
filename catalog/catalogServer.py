@@ -54,7 +54,7 @@ def get_books():
 #return the book with a specific id 
 @app.route("/bazar/info/<s_id>", methods=['GET'])
 def get_book_id(s_id):
-    book = Catalog.query.with_entities(Catalog.title,Catalog.quantity,Catalog.topic).filter_by(id = s_id).first()
+    book = Catalog.query.with_entities(Catalog.title,Catalog.quantity,Catalog.price).filter_by(id = s_id).first()
     return book_schema.jsonify(book)
 
 
