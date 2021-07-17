@@ -1,6 +1,7 @@
 from flask import Flask, request, jsonify
 from flask_sqlalchemy import SQLAlchemy
 from flask_marshmallow import Marshmallow
+from marshmallow.fields import Integer
 
 #init app
 app = Flask(__name__)
@@ -62,11 +63,33 @@ def get_book_topic(s_topic):
     return result
 
 
+@app.route("/bazar/available/<book_id>",methods=['GET'])
+def search(book_id):
+    book = Catalog.query.get(book_id)
+    if book:
+        #amount = request.json['amount']
+        args = request.args
+        amount = int(args['amount'])
+        if book.quantity - amount < 0:
+            return jsonify({"status":"not enough","the remaining quantity of books is less than the ordered books which are " : book.quantity })
+        elif book.quantity - amount == 0 :
+            db.session.delete(book) 
+            db.session.commit()
+            return jsonify({"status":"done"})
+        else :
+            book.quantity = book.quantity - amount 
+            db.session.commit()
+            return jsonify({"status":"done"})
+    else:  return jsonify({"status":"done",book_id : "this id does not exist"})
+
+
 @app.route("/bazar/descrease_quantity/<book_id>",methods=['PUT'])
 def descrease_book_quantity(book_id):
     book = Catalog.query.get(book_id)
     if book:
-        amount = request.json['amount']
+        #amount = request.json['amount']
+        args = request.args
+        amount = int(args['amount'])
         if book.quantity - amount < 0:
             return jsonify({"the remaining quantity of books is less than the ordered books which are " : book.quantity })
         elif book.quantity - amount == 0 :
@@ -77,13 +100,17 @@ def descrease_book_quantity(book_id):
             book.quantity = book.quantity - amount 
             db.session.commit()
             return book_schema.jsonify(book)
+            #return jsonify({"The operation is done and after we dicreased the amount of the book we have just ": book.quantity })
     else:  return jsonify({book_id : "this id does not exist"})
+
 
 @app.route("/bazar/increase_quantity/<book_id>",methods=['PUT'])
 def increase_book_quantity(book_id):
     book = Catalog.query.get(book_id)
     if book:
-        amount = request.json['amount']
+        #amount = request.json['amount']
+        args = request.args
+        amount = int(args['amount'])
         book.quantity = book.quantity + amount 
         db.session.commit()
         return book_schema.jsonify(book)
@@ -94,11 +121,18 @@ def increase_book_quantity(book_id):
 def update_book_price(book_id):
     book = Catalog.query.get(book_id)
     if book:
-        price = request.json['price']
+        #price = request.json['price']
+        args = request.args
+        price = int(args['price'])
         book.price = price 
         db.session.commit()
         return book_schema.jsonify(book)
     else:  return jsonify({book_id : "this id does not exist"})
+
+
+@app.route("/",methods=['GET'])
+def home():
+    return jsonify({'msg':'home'})
 
 if __name__ == '___main__':
     app.run(debug=True)
