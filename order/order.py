@@ -24,7 +24,7 @@ ma = Marshmallow(app)
 class Order(db.Model):
   id = db.Column(db.Integer, primary_key=True)
   book_id = db.Column(db.Integer)
-  date_created = db.Column(db.DateTime, default=datetime.now)
+  #date_created = db.Column(db.DateTime, default=datetime.now)
 
 
   def __init__(self, book_id):
@@ -33,7 +33,7 @@ class Order(db.Model):
 
 class OrderSchema(ma.Schema):
   class Meta:
-    fields = ('id', 'book_id','date_created')
+    fields = ('id', 'book_id')
 
 # Init schema
 order_schema = OrderSchema()
@@ -42,23 +42,29 @@ orders_schema = OrderSchema(many=True)
 ###################################################################
 # if client send purchase with a specific book_id
 #order server send to catalog server
-@app.route('/bazar/purchase/<int:book_id>', methods=['GET'])
+@app.route('/bazar/purchase/<int:book_id>', methods=['POST'])
 def add_order(book_id):
   book_id = book_id
-  args = request.args
-  amount = args['amount']
+  #header
+  #args = request.args
+  #amount = args['amount']
+  #body
+  amount = request.form.get('amount')
   #here i want to send request to catalog server to ask about book qty
   r=requests.get("http://192.168.1.202:5000/bazar/available/"+str(book_id),{'amount':amount})
   temp=json.loads(r.content)
   print(temp['status'])
   #if response from the catalog => "available" post the order
   #else return error msg
-  if temp['status']=="done":
+  if temp['status']=="available":
+    r2=requests.put("http://192.168.1.202:5000/bazar/decrease_quantity/"+str(book_id),{'amount':amount})
+    temp2=r2.json()
+    print(r2.json())
     new_order = Order(book_id)
     db.session.add(new_order)
     db.session.commit()
   #return order_schema.jsonify(new_order)
-  return r.content
+  return {"msg":f"bought book '{temp2.get('book_title')}'"}
 
 ###################################################################
 #show the order list

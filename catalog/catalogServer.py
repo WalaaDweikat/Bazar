@@ -52,7 +52,7 @@ def get_books():
 
 @app.route("/bazar/info/<s_id>", methods=['GET'])
 def get_book_id(s_id):
-    book = Catalog.query.with_entities(Catalog.title,Catalog.quantity,Catalog.topic).filter_by(id = s_id).first()
+    book = Catalog.query.with_entities(Catalog.title,Catalog.quantity,Catalog.topic,Catalog.price).filter_by(id = s_id).first()
     return book_schema.jsonify(book)
 
 
@@ -72,35 +72,32 @@ def search(book_id):
         amount = int(args['amount'])
         if book.quantity - amount < 0:
             return jsonify({"status":"not enough","the remaining quantity of books is less than the ordered books which are " : book.quantity })
-        elif book.quantity - amount == 0 :
-            db.session.delete(book) 
-            db.session.commit()
-            return jsonify({"status":"done"})
         else :
-            book.quantity = book.quantity - amount 
-            db.session.commit()
-            return jsonify({"status":"done"})
-    else:  return jsonify({"status":"done",book_id : "this id does not exist"})
+            #book.quantity = book.quantity - amount 
+            #db.session.commit()
+            return jsonify({"status":"available"})
+    else:  return jsonify({"status":"unfound",book_id : "this id does not exist"})
 
 
-@app.route("/bazar/descrease_quantity/<book_id>",methods=['PUT'])
-def descrease_book_quantity(book_id):
+@app.route("/bazar/decrease_quantity/<book_id>",methods=['PUT'])
+def decrease_book_quantity(book_id):
     book = Catalog.query.get(book_id)
     if book:
         #amount = request.json['amount']
-        args = request.args
-        amount = int(args['amount'])
+        #args = request.args
+        #amount = int(args['amount'])
+        amount = int(request.form.get('amount'))
         if book.quantity - amount < 0:
-            return jsonify({"the remaining quantity of books is less than the ordered books which are " : book.quantity })
+            return jsonify({"msg":f"not enough ,the remaining quantity of books is less than the required books which are {book.quantity}"})
         elif book.quantity - amount == 0 :
-            db.session.delete(book) 
+            #db.session.delete(book)
+            book.quantity = 0  
             db.session.commit()
-            return jsonify({"done" : 0})
+            return jsonify({"book_title":book.title,"msg" : f"decrease of '{book.title}' book quantity ,the quantity now is {book.quantity}"})
         else :
             book.quantity = book.quantity - amount 
             db.session.commit()
-            return book_schema.jsonify(book)
-            #return jsonify({"The operation is done and after we dicreased the amount of the book we have just ": book.quantity })
+            return jsonify({"book_title":book.title,"msg" : f"decrease of '{book.title}' book quantity ,the quantity now is {book.quantity}"})
     else:  return jsonify({book_id : "this id does not exist"})
 
 
@@ -109,11 +106,12 @@ def increase_book_quantity(book_id):
     book = Catalog.query.get(book_id)
     if book:
         #amount = request.json['amount']
-        args = request.args
-        amount = int(args['amount'])
+        #args = request.args
+        #amount = int(args['amount'])
+        amount = int(request.form.get('amount'))
         book.quantity = book.quantity + amount 
         db.session.commit()
-        return book_schema.jsonify(book)
+        return jsonify({"msg" : f"increase of '{book.title}' book quantity,the quantity now is {book.quantity}"})
     else:  return jsonify({book_id : "this id does not exist"})
 
 
@@ -122,8 +120,9 @@ def update_book_price(book_id):
     book = Catalog.query.get(book_id)
     if book:
         #price = request.json['price']
-        args = request.args
-        price = int(args['price'])
+        #args = request.args
+        #price = int(args['price'])
+        price = request.form.get('price')
         book.price = price 
         db.session.commit()
         return book_schema.jsonify(book)
