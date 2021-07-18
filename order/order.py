@@ -63,9 +63,9 @@ def add_order(book_id):
     new_order = Order(book_id)
     db.session.add(new_order)
     db.session.commit()
-  #return order_schema.jsonify(new_order)
-  return {"msg":f"bought book '{temp2.get('book_title')}'"}
-
+    #return order_schema.jsonify(new_order)
+    return {"msg":f"bought book '{temp2.get('book_title')}'"}
+  else: return(r.content)
 ###################################################################
 #show the order list
 @app.route('/show', methods=['GET'])
