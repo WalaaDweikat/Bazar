@@ -43,6 +43,7 @@ book_schema = CatalogSchema()
 books_schema = CatalogSchema(many=True)
 
 
+#return the all books information in the database
 @app.route("/bazar/info/all", methods=['GET'])
 def get_books():
     all_books = Catalog.query.all()
@@ -50,12 +51,14 @@ def get_books():
     return jsonify(result)
 
 
+#return the information about the book with the id s_id
 @app.route("/bazar/info/<s_id>", methods=['GET'])
 def get_book_id(s_id):
     book = Catalog.query.with_entities(Catalog.title,Catalog.quantity,Catalog.topic,Catalog.price).filter_by(id = s_id).first()
     return book_schema.jsonify(book)
 
 
+#return the information about the book with the topic s_topic
 @app.route("/bazar/search/<s_topic>", methods=['GET'])
 def get_book_topic(s_topic):
     books = Catalog.query.with_entities(Catalog.id,Catalog.title).filter_by(topic=s_topic.replace("%20"," ")).all()
@@ -63,34 +66,35 @@ def get_book_topic(s_topic):
     return result
 
 
+#This endpoint is used by the order server to check if there is enough amount of purchased books
+#when the client uses the endpoint '/bazar/purchase/<int:book_id>' (this endpoint in the order server) the order server will send a query to the catalog 
+#to now the if the quantity of the books in the store is sufficient 
+#if sufficient, the order will send an update query to the catalog to decrease the quantity of books by the amount
 @app.route("/bazar/available/<book_id>",methods=['GET'])
 def search(book_id):
     book = Catalog.query.get(book_id)
     if book:
-        #amount = request.json['amount']
         args = request.args
         amount = int(args['amount'])
+        #there is no enough books to purchase
         if book.quantity - amount < 0:
             return jsonify({"status":"not enough","the remaining quantity of books is less than the ordered books which are " : book.quantity })
         else :
-            #book.quantity = book.quantity - amount 
-            #db.session.commit()
+            #the book quantity is enough to purchase
             return jsonify({"status":"available"})
-    else:  return jsonify({"status":"unfound",book_id : "this id does not exist"})
+    else:  return jsonify({"status":"not found",book_id : "this id does not exist"})
 
 
+#This is for decreasing the quantity of books in the database by the amount which is sent with the request body 
+#This end point is used by the order server (Update) for the purchase request
 @app.route("/bazar/decrease_quantity/<book_id>",methods=['PUT'])
 def decrease_book_quantity(book_id):
     book = Catalog.query.get(book_id)
     if book:
-        #amount = request.json['amount']
-        #args = request.args
-        #amount = int(args['amount'])
         amount = int(request.form.get('amount'))
         if book.quantity - amount < 0:
             return jsonify({"msg":f"not enough ,the remaining quantity of books is less than the required books which are {book.quantity}"})
         elif book.quantity - amount == 0 :
-            #db.session.delete(book)
             book.quantity = 0  
             db.session.commit()
             return jsonify({"book_title":book.title,"msg" : f"decrease of '{book.title}' book quantity ,the quantity now is {book.quantity}"})
@@ -101,6 +105,8 @@ def decrease_book_quantity(book_id):
     else:  return jsonify({book_id : "this id does not exist"})
 
 
+#increasing the book quantity by the amount 
+#this endpoint to be used by the bookstore admin 
 @app.route("/bazar/increase_quantity/<book_id>",methods=['PUT'])
 def increase_book_quantity(book_id):
     book = Catalog.query.get(book_id)
@@ -115,6 +121,8 @@ def increase_book_quantity(book_id):
     else:  return jsonify({book_id : "this id does not exist"})
 
 
+#updating the book price 
+#this also to be used by the admin
 @app.route("/bazar/update_price/<book_id>",methods=['PUT'])
 def update_book_price(book_id):
     book = Catalog.query.get(book_id)
